@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="bn"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>আমার ভিডিও লাইব্রেরি</title>
+<style>
+:root{--bg:#f4f3ee;--card:#fff;--tx:#1d1d1b;--mut:#6b6a64;--bd:#e2e0d8;--ac:#1f5fd6;--acx:#fff;
+--pb:#ebe9e2;--pt:#55534d;--cb:#fdf0d0;--ct:#9a6700;--tb:#dff3e8;--tt:#16794a;--fb:#fbe3e1;--ft:#b3261e}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#141413;--card:#201f1d;--tx:#f0efe9;--mut:#a09e95;--bd:#34332f;--ac:#6ea0ff;--acx:#0b1a38;
+--pb:#2d2c29;--pt:#c4c2b9;--cb:#3b2f12;--ct:#f0c660;--tb:#17352a;--tt:#6fd6a0;--fb:#40201e;--ft:#ff9a93}}
+*{box-sizing:border-box}html{padding-top:env(safe-area-inset-top,0)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Noto Sans Bengali","Hind Siliguri",system-ui,sans-serif;line-height:1.55;padding-bottom:env(safe-area-inset-bottom,0)}
+main{max-width:680px;margin:0 auto;padding:14px}
+h1{font-size:1.35rem;margin:2px 0}.sub{color:var(--mut);font-size:.88rem;margin:0 0 12px}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:12px;margin-bottom:12px}
+textarea,input,select{width:100%;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:8px}
+textarea{min-height:64px;resize:vertical}
+button,.btn{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 12px;cursor:pointer;text-decoration:none;display:inline-block}
+.pri{background:var(--ac);color:var(--acx);border-color:var(--ac);width:100%;font-weight:600}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}
+.chips button{white-space:nowrap;border-radius:99px;padding:4px 12px;font-size:.88rem}
+.chips .on{background:var(--ac);color:var(--acx);border-color:var(--ac)}
+.card{display:flex;gap:10px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:8px;margin-bottom:8px;cursor:pointer}
+.th{width:96px;height:72px;border-radius:10px;background:var(--pb);flex:none;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:1.6rem;overflow:hidden}
+.th img{width:100%;height:100%;object-fit:cover}
+.ci{min-width:0;flex:1}.ci b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.95rem}
+.bd{display:inline-block;font-size:.75rem;font-weight:600;padding:1px 9px;border-radius:99px;margin:3px 4px 0 0}
+.s-pending{background:var(--pb);color:var(--pt)}.s-checking{background:var(--cb);color:var(--ct)}.s-true{background:var(--tb);color:var(--tt)}.s-false{background:var(--fb);color:var(--ft)}.up{background:var(--cb);color:var(--ct)}
+.m{color:var(--mut);font-size:.85rem;overflow-wrap:anywhere}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;z-index:9}.ov.on{display:block}
+.sh{position:absolute;left:0;right:0;bottom:0;max-height:92%;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0));max-width:680px;margin:0 auto}
+video{width:100%;max-height:50vh;border-radius:12px;background:#000;margin-bottom:8px}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.dl{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600}
+label.ck{display:flex;gap:8px;align-items:center;margin:4px 0 10px}label.ck input{width:auto;margin:0}
+.danger{color:var(--ft)}
+</style></head><body><main>
+<h1>📚 আমার ভিডিও লাইব্রেরি</h1><p class="sub" id="stat"></p>
+
+<div class="box">
+<textarea id="links" placeholder="ফেসবুক ভিডিও/রিলের লিংক পেস্ট করুন (একসাথে অনেকগুলো দিলেও হবে, প্রতিটি আলাদা লাইনে)"></textarea>
+<button class="pri" id="add">➕ লাইব্রেরিতে সেভ করুন</button></div>
+
+<input id="q" placeholder="🔍 শিরোনাম বা নোটে খুঁজুন...">
+<div class="chips" id="chips"></div>
+<div id="list"></div>
+
+<div class="row"><button id="exp">⬇ ব্যাকআপ</button><button id="imp">⬆ ব্যাকআপ ফিরিয়ে আনুন</button><input id="file" type="file" accept=".json" hidden></div>
+<p class="m">লাইব্রেরির তালিকা এই ব্রাউজারে সেভ থাকে। ফোন বা ব্রাউজার বদলালে ব্যাকআপ ফাইল দিয়ে ফিরিয়ে আনতে পারবেন।</p>
+</main>
+
+<div class="ov" id="ov"><div class="sh" id="sh"></div></div>
+
+<script>
+var L=[],key=localStorage.getItem('vl-key')||'',F='all';
+var ST={pending:'যাচাই বাকি',checking:'যাচাই চলছে',true:'সত্য',false:'মিথ্যা'};
+try{L=JSON.parse(localStorage.getItem('vl3')||'[]')||[]}catch(e){L=[]}
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function save(){try{localStorage.setItem('vl3',JSON.stringify(L))}catch(e){}}
+function enc(s){return encodeURIComponent(s)}
+function get(id){return L.filter(function(x){return x.id===id})[0]}
+async function info(u){
+  var r=await fetch('/api/info?url='+enc(u)+'&key='+enc(key)),j=await r.json();
+  if(r.status===401){var k=prompt('পাসওয়ার্ড দিন');if(k===null)throw new Error('পাসওয়ার্ড দেওয়া হয়নি');key=k;localStorage.setItem('vl-key',key);return info(u)}
+  if(!r.ok)throw new Error(j.error||'ব্যর্থ');return j}
+
+$('add').onclick=async function(){
+  var m=$('links').value.match(/https?:\/\/[^\s]+/g)||[],added=[];
+  m.forEach(function(u){if(!/(facebook\.com|fb\.watch|fb\.com)\//i.test(u))return;
+    if(L.some(function(x){return x.url===u})||added.some(function(x){return x.url===u}))return;
+    added.push({id:Date.now()+added.length,url:u,title:'',thumb:'',status:'pending',note:'',uploaded:false,at:new Date().toISOString()})});
+  if(!added.length){alert('নতুন ফেসবুক লিংক পাওয়া যায়নি।');return}
+  L=added.reverse().concat(L);$('links').value='';save();draw();
+  for(var i=0;i<added.length;i++){
+    try{var j=await info(added[i].url);added[i].title=j.title||'';added[i].thumb=j.thumbnail||''}catch(e){added[i].err=1}
+    save();draw()}
+};
+
+function draw(){
+  var q=$('q').value.trim().toLowerCase(),n={all:L.length,pending:0,checking:0,true:0,false:0,up:0};
+  L.forEach(function(i){n[i.status]++;if(i.uploaded)n.up++});
+  $('stat').textContent='মোট '+L.length+'টি ভিডিও · সত্য '+n.true+' · মিথ্যা '+n.false+' · আপলোড হয়েছে '+n.up;
+  var tabs=[['all','সব'],['pending','যাচাই বাকি'],['checking','যাচাই চলছে'],['true','সত্য'],['false','মিথ্যা'],['up','আপলোড হয়েছে']];
+  $('chips').innerHTML=tabs.map(function(t){return '<button data-f="'+t[0]+'" class="'+(F===t[0]?'on':'')+'">'+t[1]+' ('+n[t[0]]+')</button>'}).join('');
+  var v=L.filter(function(i){
+    if(F==='up'&&!i.uploaded)return false;
+    if(F!=='all'&&F!=='up'&&i.status!==F)return false;
+    return !q||(i.title+' '+i.note+' '+i.url).toLowerCase().indexOf(q)>=0});
+  $('list').innerHTML=v.length?v.map(function(i){
+    return '<div class="card" data-id="'+i.id+'"><div class="th">'+(i.thumb?'<img loading="lazy" src="'+esc(i.thumb)+'" onerror="this.remove()">':'🎬')+'</div><div class="ci"><b>'+
+    esc(i.title||(i.err?'শিরোনাম আনা যায়নি (খুলে দেখুন)':'⏳ তথ্য আনা হচ্ছে...'))+'</b><div><span class="bd s-'+i.status+'">'+ST[i.status]+'</span>'+
+    (i.uploaded?'<span class="bd up">✅ আপলোড হয়েছে</span>':'')+'</div>'+(i.note?'<div class="m">'+esc(i.note.slice(0,60))+'</div>':'')+'</div></div>'}).join(''):'<div class="m" style="text-align:center;padding:24px">এখানে কিছু নেই। উপরে লিংক দিয়ে সেভ করুন।</div>';
+}
+$('chips').onclick=function(e){var f=e.target.getAttribute('data-f');if(f){F=f;draw()}};
+$('q').oninput=draw;
+$('list').onclick=function(e){var c=e.target.closest('.card');if(c)openSheet(+c.getAttribute('data-id'))};
+
+async function openSheet(id){
+  var it=get(id);if(!it)return;
+  $('sh').innerHTML='<div class="row" style="justify-content:space-between"><b>ভিডিওর বিবরণ</b><button id="x">✕ বন্ধ</button></div><div id="media" class="m">⏳ ভিডিও আনা হচ্ছে...</div>'+
+  '<input id="t" placeholder="শিরোনাম" value="'+esc(it.title)+'">'+
+  '<select id="s">'+Object.keys(ST).map(function(k){return '<option value="'+k+'"'+(it.status===k?' selected':'')+'>'+ST[k]+'</option>'}).join('')+'</select>'+
+  '<textarea id="n" placeholder="যাচাইয়ের নোট: সূত্র, প্রমাণ, কী বলতে হবে...">'+esc(it.note)+'</textarea>'+
+  '<label class="ck"><input type="checkbox" id="u"'+(it.uploaded?' checked':'')+'> আমার চ্যানেলে আপলোড হয়েছে</label>'+
+  '<div class="row"><a class="btn" target="_blank" rel="noopener noreferrer" href="'+esc(it.url)+'">ফেসবুকে খুলুন</a><button id="d" class="danger">🗑 মুছুন</button></div>';
+  $('ov').classList.add('on');
+  $('x').onclick=close;
+  $('t').onchange=function(){it.title=this.value;save();draw()};
+  $('s').onchange=function(){it.status=this.value;save();draw()};
+  $('n').onchange=function(){it.note=this.value;save();draw()};
+  $('u').onchange=function(){it.uploaded=this.checked;save();draw()};
+  $('d').onclick=function(){if(confirm('লাইব্রেরি থেকে মুছে ফেলবেন?')){L=L.filter(function(x){return x!==it});save();draw();close()}};
+  try{
+    var j=await info(it.url);
+    if(!$('media'))return;
+    if(!it.title&&j.title){it.title=j.title;$('t').value=j.title}
+    if(j.thumbnail)it.thumb=j.thumbnail;save();draw();
+    var b=j.formats?j.formats.map(function(f){return '<a class="btn dl" href="/api/download?u='+enc(f.url)+'&key='+enc(key)+'&n='+enc('video-'+f.label)+'">⬇ '+esc(f.label)+(f.size?' · '+(f.size/1048576).toFixed(1)+' MB':'')+'</a>'}).join(''):
+      (j.heights||[]).map(function(h){return '<a class="btn dl" href="/api/download?url='+enc(it.url)+'&key='+enc(key)+'&h='+h+'">⬇ '+h+'p</a>'}).join('');
+    $('media').className='';
+    $('media').innerHTML=(j.preview?'<video controls playsinline preload="metadata" poster="'+esc(j.thumbnail)+'" src="'+esc(j.preview)+'"></video>':'')+
+      '<div class="row">'+(b||'<span class="m">ডাউনলোডযোগ্য ফাইল পাওয়া যায়নি।</span>')+'</div>'}
+  catch(e){if($('media'))$('media').textContent='❌ '+e.message}
+}
+function close(){$('ov').classList.remove('on')}
+$('ov').onclick=function(e){if(e.target===this)close()};
+
+$('exp').onclick=function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(L)],{type:'application/json'}));a.download='video-library-backup.json';a.click()};
+$('imp').onclick=function(){$('file').click()};
+$('file').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();
+  r.onload=function(){try{var d=JSON.parse(r.result);if(!Array.isArray(d))throw 0;
+    d.forEach(function(i){if(i&&i.url&&!L.some(function(x){return x.url===i.url}))L.push(i)});save();draw()}catch(e){alert('ফাইলটি সঠিক নয়।')}};r.readAsText(f)};
+draw();
+</script></body></html>
